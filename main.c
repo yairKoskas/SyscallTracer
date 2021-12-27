@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 #include <stdbool.h>
 #include <sys/reg.h>
 #include <sys/stat.h>
@@ -9,25 +10,19 @@
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
 
+#include "handlers.h"
+#define NUMBER_OF_SYSCALLS 332  // x86_64
 
-void writeHandler(pid_t tracee, bool* inSyscall) {
-    // in the future maybe make a syscall to number of params map
-    // and reduce the number of handlers to 7
-    long params[3];
-    if (!*inSyscall) {
-        *inSyscall = true;
-        params[0] = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RDI, NULL);
-        params[1] = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RSI, NULL);
-        params[2] = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RDX, NULL);
-        printf("SYS_write called with "
-                       "0x%lx, 0x%lx, 0x%lx\n",
-                       params[0], params[1],
-                       params[2]);
-    } else {
-        long returnValue = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RAX, NULL);
-        printf("SYS_write returned %ld\n", returnValue);
-        *inSyscall = false;
+handler_t* handlers[NUMBER_OF_SYSCALLS];
+
+void setupHandlers() {
+    size_t i;
+    for (i = 0; i < NUMBER_OF_SYSCALLS; ++i) {
+        handlers[i] = &defaultHandler;
     }
+    handlers[SYS_write] = &writeHandler;
+    handlers[SYS_read] = &readHandler;
+    handlers[SYS_mmap] = &mmapHandler;
 }
 
 
@@ -41,6 +36,7 @@ int main(int argc, char* argv[]) {
         printf("File doesn't exist or isn't executable\n");
         return -1;
     }
+    setupHandlers();
     pid_t tracee = fork();
 	long orig_rax;
     if (tracee == 0) {
@@ -61,14 +57,7 @@ int main(int argc, char* argv[]) {
             }
 			// every entry on the user_regs struct is unsigned long
             orig_rax = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * ORIG_RAX, NULL);
-            switch (orig_rax) {
-                case SYS_write:
-                    writeHandler(tracee, &inSyscall);
-                    break;
-                default:
-                    printf("User called syscall: %ld\n", orig_rax);
-                    break;
-            }
+            (*handlers[orig_rax])(tracee, &inSyscall);
 		    ptrace(PTRACE_SYSCALL, tracee, NULL, NULL);
 		}
     }
