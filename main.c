@@ -41,25 +41,26 @@ int main(int argc, char* argv[]) {
 	long orig_rax;
     if (tracee == 0) {
         ptrace(PTRACE_TRACEME, 0, NULL, NULL);
-		execvp(argv[1], argv+1);
+        argv++;
+        execvp(argv[0], argv);
     } else if (tracee == -1) {
         perror("Fork error\n");
         return -1;
     } else {
         // parent process
         bool inSyscall = false;
-		while (1) {
+        while (1) {
             long rax;
-			int status;
-			wait(&status);
+            int status;
+            wait(&status);
             if (WIFEXITED(status)) {
                 break;
             }
 			// every entry on the user_regs struct is unsigned long
             orig_rax = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * ORIG_RAX, NULL);
             (*handlers[orig_rax])(tracee, &inSyscall);
-		    ptrace(PTRACE_SYSCALL, tracee, NULL, NULL);
-		}
+            ptrace(PTRACE_SYSCALL, tracee, NULL, NULL);
+        }
     }
     printf("+++ exited +++\n");
 }

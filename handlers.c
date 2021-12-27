@@ -19,7 +19,7 @@ void readHandler(pid_t tracee, bool* inSyscall) {
         long returnValue = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RAX, NULL);
         printf("SYS_read returned 0x%lx\n", returnValue);
         *inSyscall = false;
-	}
+    }
 }
 
 void mmapHandler(pid_t tracee, bool* inSyscall) {
@@ -41,7 +41,7 @@ void mmapHandler(pid_t tracee, bool* inSyscall) {
         long returnValue = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RAX, NULL);
         printf("SYS_mmap returned 0x%lx\n", returnValue);
         *inSyscall = false;
-	}
+    }
 }
 
 void writeHandler(pid_t tracee, bool* inSyscall) {
