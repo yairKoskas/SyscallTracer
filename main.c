@@ -9,8 +9,6 @@
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
 
-#define BITS 8  // 4 on 32 bit
-
 
 void writeHandler(pid_t tracee, bool* inSyscall) {
     // in the future maybe make a syscall to number of params map
@@ -18,15 +16,15 @@ void writeHandler(pid_t tracee, bool* inSyscall) {
     long params[3];
     if (!*inSyscall) {
         *inSyscall = true;
-        params[0] = ptrace(PTRACE_PEEKUSER, tracee, BITS * RDI, NULL);
-        params[1] = ptrace(PTRACE_PEEKUSER, tracee, BITS * RSI, NULL);
-        params[2] = ptrace(PTRACE_PEEKUSER, tracee, BITS * RDX, NULL);
+        params[0] = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RDI, NULL);
+        params[1] = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RSI, NULL);
+        params[2] = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RDX, NULL);
         printf("SYS_write called with "
                        "0x%lx, 0x%lx, 0x%lx\n",
                        params[0], params[1],
                        params[2]);
     } else {
-        long returnValue = ptrace(PTRACE_PEEKUSER, tracee, BITS * RAX, NULL);
+        long returnValue = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RAX, NULL);
         printf("SYS_write returned %ld\n", returnValue);
         *inSyscall = false;
     }
@@ -35,7 +33,7 @@ void writeHandler(pid_t tracee, bool* inSyscall) {
 
 int main(int argc, char* argv[]) {
     if (argc < 2) {
-        printf("Usage Koskasyscall [path_to_executable] [-args-]\n");
+        printf("Usage: SyscallTracer [path_to_executable] [-args-]\n");
         return -1;
     }
     // checking if file exists and is executable, on success, access returns 0
@@ -61,7 +59,8 @@ int main(int argc, char* argv[]) {
             if (WIFEXITED(status)) {
                 break;
             }
-            orig_rax = ptrace(PTRACE_PEEKUSER, tracee, BITS * ORIG_RAX, NULL);
+			// every entry on the user_regs struct is unsigned long
+            orig_rax = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * ORIG_RAX, NULL);
             switch (orig_rax) {
                 case SYS_write:
                     writeHandler(tracee, &inSyscall);
