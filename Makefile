@@ -1,2 +1,2 @@
 all:
-	gcc main.c -o syscall_tracer
+	gcc main.c handlers.c -o syscall_tracer
