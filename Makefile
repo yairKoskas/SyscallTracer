@@ -1,2 +1,4 @@
+SRCDIR := src
+
 all:
-	gcc main.c handlers.c -o syscall_tracer
+	gcc $(SRCDIR)/main.c $(SRCDIR)/handlers.c $(SRCDIR)/utils.c -o syscall_tracer

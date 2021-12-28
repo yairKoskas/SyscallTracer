@@ -17,5 +17,7 @@ handler_t defaultHandler;
 handler_t mmapHandler;
 handler_t readHandler;
 handler_t writeHandler;
+handler_t execveHandler;
+handler_t openatHandler;
 
 #endif

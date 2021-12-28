@@ -10,7 +10,7 @@
 #include <sys/ptrace.h>
 #include <sys/syscall.h>
 
-#include "handlers.h"
+#include "headers/handlers.h"
 #define NUMBER_OF_SYSCALLS 332  // x86_64
 
 handler_t* handlers[NUMBER_OF_SYSCALLS];
@@ -23,6 +23,8 @@ void setupHandlers() {
     handlers[SYS_write] = &writeHandler;
     handlers[SYS_read] = &readHandler;
     handlers[SYS_mmap] = &mmapHandler;
+    handlers[SYS_execve] = &execveHandler;
+    handlers[SYS_openat] = &openatHandler;
 }
 
 
@@ -38,7 +40,7 @@ int main(int argc, char* argv[]) {
     }
     setupHandlers();
     pid_t tracee = fork();
-	long orig_rax;
+    long orig_rax;
     if (tracee == 0) {
         ptrace(PTRACE_TRACEME, 0, NULL, NULL);
         argv++;
