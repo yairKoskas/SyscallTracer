@@ -12,11 +12,14 @@ char* getStringAtAddress(unsigned long address, pid_t tracee, int maxLen) {
     while (!eos) {
         temp = ptrace(PTRACE_PEEKDATA, tracee, address + currSize, NULL);
 		if (currSize >= maxLen) {
-			eos = true;
+			break;
 		}
+        if (index((char*)&temp, '\n')) {
+            *index((char*)&temp, '\n') = '\0';
+        }
         strncat(buf, (char*)&temp, sizeof(temp));
         if (strnlen((char*)&temp, 8) < 8) {
-            eos = true;
+            break;
         }
         currSize += sizeof(temp);
         if (overallSize == currSize) {

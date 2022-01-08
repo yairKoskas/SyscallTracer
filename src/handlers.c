@@ -6,6 +6,22 @@ void defaultHandler(pid_t tracee, bool* inSyscall) {
     return;
 }
 
+void fstatHandler(pid_t tracee, bool* inSyscall) {
+    long params[2];
+    if (!*inSyscall) {
+        *inSyscall = true;
+        params[0] = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RDI, NULL);
+        params[1] = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RSI, NULL);
+        printf("SYS_fstat("
+                    "0x%lx, 0x%lx)\n",
+                    params[0], params[1]);
+    } else {
+        long returnValue = ptrace(PTRACE_PEEKUSER, tracee, sizeof(unsigned long) * RAX, NULL);
+        printf("SYS_fstat returned 0x%lx\n", returnValue);
+        *inSyscall = false;
+    }
+}
+
 void openatHandler(pid_t tracee, bool* inSyscall) {
     long params[4];
     if (!*inSyscall) {

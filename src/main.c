@@ -25,6 +25,7 @@ void setupHandlers() {
     handlers[SYS_mmap] = &mmapHandler;
     handlers[SYS_execve] = &execveHandler;
     handlers[SYS_openat] = &openatHandler;
+    handlers[SYS_fstat] = &fstatHandler;
 }
 
 

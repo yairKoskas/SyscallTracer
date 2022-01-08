@@ -19,5 +19,6 @@ handler_t readHandler;
 handler_t writeHandler;
 handler_t execveHandler;
 handler_t openatHandler;
+handler_t fstatHandler;
 
 #endif
